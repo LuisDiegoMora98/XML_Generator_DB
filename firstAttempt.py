@@ -20,18 +20,30 @@ def prettify(elem):
     reparsed = minidom.parseString(rough_string)
     return reparsed.toprettyxml(indent="  ")
 
+#Load lists with info to fill on the regsiters
 datesList = getDatesList(["2020-06-01", "2020-11-1"])
 
-top = Element('Operaciones')
-listaFechas = []
-children = [
-    Element('FechaOperacion', Fecha=datesList[date])
-    for date in range(len(datesList))
-    ]
+Operaciones = Element('Operaciones')
+FechasOperaciones = []
+for date in range(len(datesList)):                                                  #Iteratss all the dates
+    FechaOperacion = Element('FechaOperacion', Fecha=datesList[date])
+    Persona1 = Element('Persona', Campos="{Añadir campos y valores}")
+    Persona2 = Element('Persona', Campos="{Añadir campos y valores}")
+    Cuenta = Element('Cuenta', Campos="{Añadir campos y valores}")
+    Beneficiario = Element('Beneficiario', Campos="{Añadir campos y valores}")
+    FechaOperacion.append(Persona1)
+    FechaOperacion.append(Persona2)
+    FechaOperacion.append(Cuenta)
+    FechaOperacion.append(Beneficiario)
+    Movs = []
+    #For con todos los movs que se desean aadir (Puede sacarse con un intervalo de movs al dia y con un random insertar esos movs)
+    for i in range(14):
+        Movs.append(Element('Movimiento', Campos="{Añadir campos y valores}"))
+    FechaOperacion.extend(Movs)
+    FechasOperaciones.append(FechaOperacion)
+Operaciones.extend(FechasOperaciones)
 
-top.extend(children)
-
-print(prettify(top))
+print(prettify(Operaciones))
 
 
 
