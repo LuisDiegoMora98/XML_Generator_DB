@@ -74,28 +74,28 @@ def GenerateXML(fileName):
 
         cuenta = ET.Element('Cuenta'
                             ,ValorDocumentoIdentidadDelCliente = str(valorDocumentoIdentidadDelClienteList[i])
-                            ,tipoCuentaId = str(tipoCuentaIdList[i])
-                            ,numeroCuenta = str(numeroCuentaList[i]))
+                            ,TipoCuentaId = str(tipoCuentaIdList[i])
+                            ,NumeroCuenta = str(numeroCuentaList[i]))
         
         beneficiario = ET.Element('Beneficiario'
-                                  ,numeroCuenta = ''
-                                  ,valorDocumentoIdentidadBeneficiario = ''
+                                  ,NumeroCuenta = ''
+                                  ,ValorDocumentoIdentidadBeneficiario = ''
                                   ,ParentezcoId = ''
                                   ,Porcentaje = '')
                 
-#first list of movements. This list is used to add a least one movement of each type to every accounts.
+#first list of movements. This list is used to add at least one movement of each type to all accounts.
         movementsList = []
         movementsList.append(ET.Element('Movimientos'
-                                        ,tipo = str(4)
-                                        ,codigoCuenta = str(numeroCuentaList[i])
-                                        ,monto = str(r.randint(6000000,10000000)) #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
-                                        ,descripcion = movementDescList[4]))
+                                        ,Tipo = str(4)
+                                        ,CodigoCuenta = str(numeroCuentaList[i])
+                                        ,Monto = str(r.randint(6000000,10000000)) #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
+                                        ,Descripcion = movementDescList[4]))
         for x in range(0,6):           
             movimiento = ET.Element('Movimientos'
-            ,tipo = str(x)
-            ,codigoCuenta = str(numeroCuentaList[i])
-            ,monto = str(r.randint(100000,1000000))
-            ,descripcion = movementDescList[x]
+            ,Tipo = str(x)
+            ,CodigoCuenta = str(numeroCuentaList[i])
+            ,Monto = str(r.randint(100000,1000000))
+            ,Descripcion = movementDescList[x]
             )
             
             movementsList.append(movimiento)
@@ -120,10 +120,10 @@ def GenerateXML(fileName):
             randTipo = r.randint(0,5)
             
             movimiento = ET.Element('Movimientos'
-            ,tipo = str(randTipo)
-            ,codigoCuenta = str(numeroCuentaList[randCuenta])
-            ,monto = str(r.randint(10000,500000))
-            ,descripcion = movementDescList[randTipo])  
+            ,Tipo = str(randTipo)
+            ,CodigoCuenta = str(numeroCuentaList[randCuenta])
+            ,Monto = str(r.randint(10000,500000))
+            ,Descripcion = movementDescList[randTipo])  
             movementsList2.append(movimiento)
 
         fechaOperacion.extend(movementsList2)
