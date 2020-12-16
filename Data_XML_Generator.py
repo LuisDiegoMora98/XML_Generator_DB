@@ -70,6 +70,8 @@ def GenerateXML(fileName):
     randDigitList = ['$','%','@','&','/','(',')','ª','*']
     randNumList = range(000,999)
 
+    #Hash to evaluate all accounts final balance
+    hashCuenta = dict()
 
     
 #Main Structure: Nodes(persona, cuenta, beneficiarios)      
@@ -121,16 +123,30 @@ def GenerateXML(fileName):
                                 
 #first list of movements. This list is used to add at least one movement of each type to all accounts.
         movementsList = []
+
+        numCuenta = str(numeroCuentaList[i])
+        monto = str(r.randint(6000000,10000000))
+        montoMovs = 0
+        montoMovs += int(monto)
+        hashCuenta[numCuenta] = montoMovs
+        
         movementsList.append(ET.Element('Movimientos'
                                         ,Tipo = str(4)
-                                        ,CodigoCuenta = str(numeroCuentaList[i])
-                                        ,Monto = str(r.randint(6000000,10000000)) #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
+                                        ,CodigoCuenta = numCuenta
+                                        ,Monto = monto #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
                                         ,Descripcion = movementDescList[4]))
-        for x in range(0,6):           
+        for x in range(0,6):
+
+            montom = str(r.randint(100000,1000000))
+            if x in (0, 1, 2):
+                hashCuenta[numCuenta] -= int(montom)
+            else:
+                hashCuenta[numCuenta] += int(montom)
+            
             movimiento = ET.Element('Movimientos'
             ,Tipo = str(x)
             ,CodigoCuenta = str(numeroCuentaList[i])
-            ,Monto = str(r.randint(100000,1000000))
+            ,Monto = montom
             ,Descripcion = movementDescList[x]
             )
             
@@ -153,14 +169,21 @@ def GenerateXML(fileName):
         fechaOperacion = ET.Element('FechaOperacion', Fecha= datesList[i])
         
         for x in range(1,20):
-            
-            randCuenta = r.randint(0, len(numeroCuentaList)-1)
+
+            listacuentas = list(hashCuenta.keys())
+            randCuenta = r.randint(0, len(listacuentas)-1)
             randTipo = r.randint(0,5)
+            randMonto = str(r.randint(10000,500000))
+
+            if(randTipo in (0, 1, 2)):
+                hashCuenta[str(listacuentas[randCuenta])] -= int(randMonto)
+            else:
+                hashCuenta[str(listacuentas[randCuenta])] += int(randMonto)
             
             movimiento = ET.Element('Movimientos'
             ,Tipo = str(randTipo)
-            ,CodigoCuenta = str(numeroCuentaList[randCuenta])
-            ,Monto = str(r.randint(10000,500000))
+            ,CodigoCuenta = str(listacuentas[randCuenta])
+            ,Monto = randMonto
             ,Descripcion = movementDescList[randTipo])  
             movementsList2.append(movimiento)
 
@@ -169,8 +192,6 @@ def GenerateXML(fileName):
         nodesList.append(fechaOperacion)
          
     root.extend(nodesList)
-
-
     
 #Writing XML File
     tree = ET.ElementTree(root)
