@@ -17,7 +17,7 @@ def GenerateXML(fileName):
     valorDocumentoIdentidadDelClienteList = r.sample(range(10000000,99999999),len(datesList)) 
     
     #Names
-    dataset = pd.read_csv('~/Downloads/archive/pokemon.csv')
+    dataset = pd.read_csv('pokemon.csv')
 
     names = dataset['name']
     namesList = names[0:len(datesList)]
@@ -70,6 +70,8 @@ def GenerateXML(fileName):
     randDigitList = ['$','%','@','&','/','(',')','ª','*']
     randNumList = range(000,999)
 
+
+    
 #Main Structure: Nodes(persona, cuenta, beneficiarios)      
     root= ET.Element('Operaciones')
     nodesList = []
@@ -77,10 +79,11 @@ def GenerateXML(fileName):
     for i in range(0,31): #Since August has 31 days it is taken as the base month to create all primary accounts
      
         fechaOperacion = ET.Element('FechaOperacion', Fecha= datesList[i])
+        cedula =  str(valorDocumentoIdentidadDelClienteList[i])
         persona = ET.Element('Persona'
                              ,TipoDocuIdentidad = str(tipoDocuIdentidadList[i])
                              ,Nombre = namesList[i]
-                             ,ValorDocumentoIdentidad = str(valorDocumentoIdentidadDelClienteList[i])
+                             ,ValorDocumentoIdentidad = cedula
                              ,FechaNacimiento = fechaNacimientoList[i]
                              ,Email = str.lower(email(names[i]))
                              ,Telefono1 = str(telephoneList[i])
@@ -103,9 +106,12 @@ def GenerateXML(fileName):
         beneficiarioList = []
         
         for n in range(0,3):
+            beneficiarioCed = ValorDocumentoIdentidadBeneficiario = str(r.choice(valorDocumentoIdentidadDelClienteList))
+            while(beneficiarioCed == cedula):    #If owner's doc id is equal to new beneficiary doc Id, then change that beneficiary doc Id to avoid owner-beneficiary relation on same person
+                beneficiarioCed =  str(r.choice(valorDocumentoIdentidadDelClienteList))
             beneficiario = ET.Element('Beneficiario'
                                     ,NumeroCuenta = str(r.choice(numeroCuentaList))
-                                    ,ValorDocumentoIdentidadBeneficiario = str(r.choice(valorDocumentoIdentidadDelClienteList))
+                                    ,ValorDocumentoIdentidadBeneficiario = beneficiarioCed
                                     ,ParentezcoId = r.choice(ParentezcoList)
                                     ,Porcentaje = str(r.randint(25,33))
                                     )
