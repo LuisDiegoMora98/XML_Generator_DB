@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 import random as r
+from datetime import datetime, timedelta 
+from dateutil.relativedelta import relativedelta
 
 
 def GenerateXML(fileName):
@@ -22,6 +24,9 @@ def GenerateXML(fileName):
     
     #Primary account number
     numeroCuentaList = r.sample(range(10000000,99999999),len(datesList)) 
+    
+    #Saving account number
+    numeroCuentaAhorroList = r.sample(range(10000000,99999999),len(datesList))
     
     #Primary account type / persons id type
     tipoCuentaIdList = [] 
@@ -55,6 +60,15 @@ def GenerateXML(fileName):
                          "Deposito Ventana", "Devolucion de Compra", "Interes del mes sobre saldo minimo",
                          "Comision exceso de operacion en CH", "Comision exceso de operacion en CA"]
     
+    #Relationship_ID
+    ParentezcoList = ["Padre", "Madre", "Hijo", "Hija", "Hermano", "Hermana", "Amigo", "Amiga", "Pareja"]
+    
+    #Final Date - Saving Account
+    randNumberList = range(1,3)
+    
+    #Password lists
+    randDigitList = ['$','%','@','&','/','(',')','ª','*']
+    randNumList = range(000,999)
 
 #Main Structure: Nodes(persona, cuenta, beneficiarios)      
     root= ET.Element('Operaciones')
@@ -76,13 +90,29 @@ def GenerateXML(fileName):
                             ,ValorDocumentoIdentidadDelCliente = str(valorDocumentoIdentidadDelClienteList[i])
                             ,TipoCuentaId = str(tipoCuentaIdList[i])
                             ,NumeroCuenta = str(numeroCuentaList[i]))
+               
+        cuentaAhorro = ET.Element('CuentaAhorro'
+                                  ,NumeroCuentaPrimaria = str(numeroCuentaList[i])
+                                  ,NumeroCuentaAhorro = str(numeroCuentaAhorroList[i])
+                                  ,FechaFinal = str(datetime.strptime(datesList[i],'%m/%d/%Y') + relativedelta(months=r.choice(randNumberList))))
         
-        beneficiario = ET.Element('Beneficiario'
-                                  ,NumeroCuenta = ''
-                                  ,ValorDocumentoIdentidadBeneficiario = ''
-                                  ,ParentezcoId = ''
-                                  ,Porcentaje = '')
-                
+        usuario = ET.Element('Usuario'
+                               ,Usuario = namesList[i].lower()
+                               ,Password = r.choice(randDigitList) + namesList[i].lower() + str(r.choice(randNumList))
+                               ,Email = str.lower(email(names[i])))
+        beneficiarioList = []
+        
+        for n in range(0,3):
+            beneficiario = ET.Element('Beneficiario'
+                                    ,NumeroCuenta = str(r.choice(numeroCuentaList))
+                                    ,ValorDocumentoIdentidadBeneficiario = str(r.choice(valorDocumentoIdentidadDelClienteList))
+                                    ,ParentezcoId = r.choice(ParentezcoList)
+                                    ,Porcentaje = str(r.randint(25,33))
+                                    )
+            beneficiarioList.append(beneficiario)
+                                    
+                                
+                                
 #first list of movements. This list is used to add at least one movement of each type to all accounts.
         movementsList = []
         movementsList.append(ET.Element('Movimientos'
@@ -103,7 +133,9 @@ def GenerateXML(fileName):
 #Building XML structure
         fechaOperacion.append(persona)
         fechaOperacion.append(cuenta)
-        fechaOperacion.append(beneficiario)    
+        fechaOperacion.append(cuentaAhorro)
+        fechaOperacion.append(usuario)
+        fechaOperacion.extend(beneficiarioList)
         fechaOperacion.extend(movementsList)
         
         nodesList.append(fechaOperacion)
