@@ -1,8 +1,6 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 import random as r
-from datetime import datetime, timedelta 
-from dateutil.relativedelta import relativedelta
 
 
 def GenerateXML(fileName):
@@ -24,9 +22,6 @@ def GenerateXML(fileName):
     
     #Primary account number
     numeroCuentaList = r.sample(range(10000000,99999999),len(datesList)) 
-    
-    #Saving account number
-    numeroCuentaAhorroList = r.sample(range(10000000,99999999),len(datesList))
     
     #Primary account type / persons id type
     tipoCuentaIdList = [] 
@@ -60,20 +55,7 @@ def GenerateXML(fileName):
                          "Deposito Ventana", "Devolucion de Compra", "Interes del mes sobre saldo minimo",
                          "Comision exceso de operacion en CH", "Comision exceso de operacion en CA"]
     
-    #Relationship_ID
-    ParentezcoList = ["Padre", "Madre", "Hijo", "Hija", "Hermano", "Hermana", "Amigo", "Amiga", "Pareja"]
-    
-    #Final Date - Saving Account
-    randNumberList = range(1,3)
-    
-    #Password lists
-    randDigitList = ['$','%','@','&','/','(',')','ª','*']
-    randNumList = range(000,999)
 
-    #Hash to evaluate all accounts final balance
-    hashCuenta = dict()
-
-    
 #Main Structure: Nodes(persona, cuenta, beneficiarios)      
     root= ET.Element('Operaciones')
     nodesList = []
@@ -81,72 +63,56 @@ def GenerateXML(fileName):
     for i in range(0,31): #Since August has 31 days it is taken as the base month to create all primary accounts
      
         fechaOperacion = ET.Element('FechaOperacion', Fecha= datesList[i])
-        cedula =  str(valorDocumentoIdentidadDelClienteList[i])
+        docId = str(valorDocumentoIdentidadDelClienteList[i])
         persona = ET.Element('Persona'
                              ,TipoDocuIdentidad = str(tipoDocuIdentidadList[i])
                              ,Nombre = namesList[i]
-                             ,ValorDocumentoIdentidad = cedula
+                             ,ValorDocumentoIdentidad = docId
                              ,FechaNacimiento = fechaNacimientoList[i]
                              ,Email = str.lower(email(names[i]))
                              ,Telefono1 = str(telephoneList[i])
                              ,Telefono2 = str(telephoneList[i+1]))
-
+        numCuenta = str(numeroCuentaList[i])
         cuenta = ET.Element('Cuenta'
                             ,ValorDocumentoIdentidadDelCliente = str(valorDocumentoIdentidadDelClienteList[i])
                             ,TipoCuentaId = str(tipoCuentaIdList[i])
-                            ,NumeroCuenta = str(numeroCuentaList[i]))
-               
-        cuentaAhorro = ET.Element('CuentaAhorro'
-                                  ,NumeroCuentaPrimaria = str(numeroCuentaList[i])
-                                  ,NumeroCuentaAhorro = str(numeroCuentaAhorroList[i])
-                                  ,FechaFinal = str(datetime.strptime(datesList[i],'%m/%d/%Y') + relativedelta(months=r.choice(randNumberList))))
+                            ,NumeroCuenta = numCuenta)
         
+        beneficiario = ET.Element('Beneficiario'
+                                  ,NumeroCuenta = ''
+                                  ,ValorDocumentoIdentidadBeneficiario = ''
+                                  ,ParentezcoId = ''
+                                  ,Porcentaje = '')
         usuario = ET.Element('Usuario'
-                               ,Usuario = namesList[i].lower()
-                               ,Password = r.choice(randDigitList) + namesList[i].lower() + str(r.choice(randNumList))
-                               ,Email = str.lower(email(names[i])))
-        beneficiarioList = []
-        
-        for n in range(0,3):
-            beneficiarioCed = ValorDocumentoIdentidadBeneficiario = str(r.choice(valorDocumentoIdentidadDelClienteList))
-            while(beneficiarioCed == cedula):    #If owner's doc id is equal to new beneficiary doc Id, then change that beneficiary doc Id to avoid owner-beneficiary relation on same person
-                beneficiarioCed =  str(r.choice(valorDocumentoIdentidadDelClienteList))
-            beneficiario = ET.Element('Beneficiario'
-                                    ,NumeroCuenta = str(r.choice(numeroCuentaList))
-                                    ,ValorDocumentoIdentidadBeneficiario = beneficiarioCed
-                                    ,ParentezcoId = r.choice(ParentezcoList)
-                                    ,Porcentaje = str(r.randint(25,33))
-                                    )
-            beneficiarioList.append(beneficiario)
-                                    
-                                
-                                
+                            ,User = str.lower(namesList[i])
+                            ,Pass = str(docId)
+                            ,ValorDocumentoIdentidad = str(docId)
+                            ,EsAdministrador = str(r.randint(0,1))
+                            )
+        usuarioBool = r.randint(0,2)
+        if(usuarioBool == 1):
+            usuarioPuedeVer = ET.Element('UsuarioPuedeVer'
+                            ,User = str(namesList[i])
+                            ,Cuenta = numCuenta
+                            )
+            print(usuarioBool)
+            print("User: " + namesList[i])
+            print("Nombre usuario: " + str.lower(namesList[i]))
+            fechaOperacion.append(usuarioPuedeVer)
+
+
 #first list of movements. This list is used to add at least one movement of each type to all accounts.
         movementsList = []
-
-        numCuenta = str(numeroCuentaList[i])
-        monto = str(r.randint(6000000,10000000))
-        montoMovs = 0
-        montoMovs += int(monto)
-        hashCuenta[numCuenta] = montoMovs
-        
         movementsList.append(ET.Element('Movimientos'
                                         ,Tipo = str(4)
-                                        ,CodigoCuenta = numCuenta
-                                        ,Monto = monto #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
+                                        ,CodigoCuenta = str(numeroCuentaList[i])
+                                        ,Monto = str(r.randint(6000000,10000000)) #6.000.000 is the minimum amount to ensure that in a scenario where all the movements were debits, the final balance (of this month) will be 0
                                         ,Descripcion = movementDescList[4]))
-        for x in range(0,6):
-
-            montom = str(r.randint(100000,1000000))
-            if x in (0, 1, 2):
-                hashCuenta[numCuenta] -= int(montom)
-            else:
-                hashCuenta[numCuenta] += int(montom)
-            
+        for x in range(0,6):           
             movimiento = ET.Element('Movimientos'
             ,Tipo = str(x)
             ,CodigoCuenta = str(numeroCuentaList[i])
-            ,Monto = montom
+            ,Monto = str(r.randint(100000,1000000))
             ,Descripcion = movementDescList[x]
             )
             
@@ -155,11 +121,9 @@ def GenerateXML(fileName):
 #Building XML structure
         fechaOperacion.append(persona)
         fechaOperacion.append(cuenta)
-        fechaOperacion.append(cuentaAhorro)
-        fechaOperacion.append(usuario)
-        fechaOperacion.extend(beneficiarioList)
+        fechaOperacion.append(beneficiario)    
         fechaOperacion.extend(movementsList)
-        
+        fechaOperacion.append(usuario)
         nodesList.append(fechaOperacion)
            
 #Second list of movements. This one is used to add random movements to random accounts 
@@ -169,21 +133,14 @@ def GenerateXML(fileName):
         fechaOperacion = ET.Element('FechaOperacion', Fecha= datesList[i])
         
         for x in range(1,20):
-
-            listacuentas = list(hashCuenta.keys())
-            randCuenta = r.randint(0, len(listacuentas)-1)
+            
+            randCuenta = r.randint(0, len(numeroCuentaList)-1)
             randTipo = r.randint(0,5)
-            randMonto = str(r.randint(10000,500000))
-
-            if(randTipo in (0, 1, 2)):
-                hashCuenta[str(listacuentas[randCuenta])] -= int(randMonto)
-            else:
-                hashCuenta[str(listacuentas[randCuenta])] += int(randMonto)
             
             movimiento = ET.Element('Movimientos'
             ,Tipo = str(randTipo)
-            ,CodigoCuenta = str(listacuentas[randCuenta])
-            ,Monto = randMonto
+            ,CodigoCuenta = str(numeroCuentaList[randCuenta])
+            ,Monto = str(r.randint(10000,500000))
             ,Descripcion = movementDescList[randTipo])  
             movementsList2.append(movimiento)
 
@@ -192,6 +149,8 @@ def GenerateXML(fileName):
         nodesList.append(fechaOperacion)
          
     root.extend(nodesList)
+
+
     
 #Writing XML File
     tree = ET.ElementTree(root)
@@ -200,5 +159,10 @@ def GenerateXML(fileName):
         
 GenerateXML('xmlTest.xml')
     
-
+import webbrowser
+new = 2 # open in a new tab, if possible
+chrome_path = 'C:/Program Files/Google/Chrome/Application/chrome.exe %s'
+# open an HTML file on my own (Windows) computer
+url = "file://C:/Users/aguil/Dropbox/My PC (LAPTOP-1OL20O36)/Downloads/XML_Generator_DB-main/xmlTest.xml"
+webbrowser.get(chrome_path).open(url,new=new)
 
