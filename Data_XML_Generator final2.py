@@ -1,7 +1,17 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 import random as r
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
+def printLista(lista):
+    for i in range(len(lista)):
+        print(str(i + 1) + ": " + str(lista[i]))
+
+def changeDateFormat(lista):
+    for date in lista:
+        date.replace("/", "-")
+    return lista
 
 def GenerateXML(fileName):
     
@@ -9,20 +19,33 @@ def GenerateXML(fileName):
 #Data   
 
     #Transactions date range
-    datesList = pd.date_range(start="2020-08-01",end="2020-12-31").strftime("%m/%d/%Y").tolist() 
+    datesList = pd.date_range(start="2020-08-01",end="2020-12-31").strftime("%m-%d-%Y").tolist()
+    datesList = changeDateFormat(datesList)
     
     #Persons id
-    valorDocumentoIdentidadDelClienteList = r.sample(range(10000000,99999999),len(datesList)) 
+    valorDocumentoIdentidadDelClienteList = r.sample(range(99999999),128)       #128 elements so 31*4 = persons created will be fulfilled succesfully
     
     #Names
-    dataset = pd.read_csv('pokemon.csv')
+    dataset = pd.read_csv('C:/Users/aguil/Dropbox/My PC (LAPTOP-1OL20O36)/Downloads/XML_Generator_DB-main/pokemon.csv')
 
     names = dataset['name']
     namesList = names[0:len(datesList)]
     
     #Primary account number
-    numeroCuentaList = r.sample(range(10000000,99999999),len(datesList)) 
+    numeroCuentaList = r.sample(range(10000000,99999999), 31)
     
+    #Saving account number
+    numeroCuentaAhorroList = r.sample(range(10000000,99999999),len(datesList))
+
+    #Saving account amount
+    montoAhorro = range(10000,200000, 10000)
+
+    #Saving account description
+    descriptionSavingAccountList = ['Vacaciones', 'Piedra de evolución Pokemon', 'Pociones y Antidotos', 'Bicicleta', 'Pokedex', 'Liga Pokemon']
+
+    #Saving day
+    randSavingDay = range(1,30,1)
+
     #Primary account type / persons id type
     tipoCuentaIdList = [] 
     tipoDocuIdentidadList = [] 
@@ -31,9 +54,10 @@ def GenerateXML(fileName):
         tipoDocuIdentidadList.append(r.randint(1,6))
         
     #Birthdate
-    fechas = pd.date_range(start='1950-01-01', end='2002-12-31').strftime('%m/%d/%Y').tolist() 
+    fechas = pd.date_range(start='1950-01-01', end='2002-12-31').strftime('%m-%d-%Y').tolist()
+    fechas = changeDateFormat(fechas)
     fechaNacimientoList = r.sample(fechas, len(datesList))
-    
+    fechaNacimientoList = changeDateFormat(fechaNacimientoList)
     #Email
     
     def email(name):
@@ -46,7 +70,7 @@ def GenerateXML(fileName):
     
     #Telephones
     telephoneList = r.sample(range(77777777,88888888),len(datesList)) 
-    
+    telephoneList2 = r.sample(range(77777777,88888888),len(datesList)) 
     #Movements
     movementsList = r.randint(1,9)
     
@@ -56,61 +80,107 @@ def GenerateXML(fileName):
                          "Comision exceso de operacion en CH", "Comision exceso de operacion en CA"]
     
     #Relationship_ID
-    ParentezcoList = ["Padre", "Madre", "Hijo", "Hija", "Hermano", "Hermana", "Amigo", "Amiga", "Pareja"]
+    ParentezcoList = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     
+#Final Date - Saving Account
+    randNumberList = range(2,12)
+
 #Main Structure: Nodes(persona, cuenta, beneficiarios)      
     root= ET.Element('Operaciones')
     nodesList = []
     
+    
+#Final person/account list to choose beneficiaries
+
+    PersonlistAfterRandomSelection = []
+    AccountListAfterRandomSelection = []
+    
+    personCount = 0        #To take docsIds for persons below
+    #Prints to troubleshoot
+    print("Lista de cedulas existentes:\n")
+    printLista(valorDocumentoIdentidadDelClienteList)
+    print("\n**************************************************\nFin Lista de cedulas\n**************************************************\n")
+
     for i in range(0,31): #Since August has 31 days it is taken as the base month to create all primary accounts
-     
+
         fechaOperacion = ET.Element('FechaOperacion', Fecha= datesList[i])
-        docId = str(valorDocumentoIdentidadDelClienteList[i])
-        persona = ET.Element('Persona'
-                             ,TipoDocuIdentidad = str(tipoDocuIdentidadList[i])
-                             ,Nombre = namesList[i]
-                             ,ValorDocumentoIdentidad = docId
-                             ,FechaNacimiento = fechaNacimientoList[i]
-                             ,Email = str.lower(email(names[i]))
-                             ,Telefono1 = str(telephoneList[i])
-                             ,Telefono2 = str(telephoneList[i+1]))
+
+        for k in range(0, 4):    #NEW
+            docId = str(valorDocumentoIdentidadDelClienteList[personCount])
+            print("DocID de persona " + str(personCount + 1) + "= " + docId)
+            persona = ET.Element('Persona'
+                                ,TipoDocuIdentidad = str(tipoDocuIdentidadList[personCount])
+                                ,Nombre = namesList[personCount]
+                                ,ValorDocumentoIdentidad = docId
+                                ,FechaNacimiento = fechaNacimientoList[personCount]
+                                ,Email = str.lower(email(names[personCount]))
+                                ,Telefono1 = str(telephoneList[personCount])
+                                ,Telefono2 = str(telephoneList2[personCount]))
+            fechaOperacion.append(persona)
+            PersonlistAfterRandomSelection.append(docId)
+            personCount += 1
+        print("Ultimo id de persona aniadido deberia ser: " + str(valorDocumentoIdentidadDelClienteList[personCount - 1]))
         numCuenta = str(numeroCuentaList[i])
         cuenta = ET.Element('Cuenta'
-                            ,ValorDocumentoIdentidadDelCliente = str(valorDocumentoIdentidadDelClienteList[i])
+                            ,ValorDocumentoIdentidadDelCliente = str(valorDocumentoIdentidadDelClienteList[personCount - 1])
                             ,TipoCuentaId = str(tipoCuentaIdList[i])
                             ,NumeroCuenta = numCuenta)
-        
+         
+        AccountListAfterRandomSelection.append(numCuenta)
+
+        fechaFinalSA = str(datetime.strptime(datesList[i],'%m-%d-%Y') + relativedelta(months=r.choice(randNumberList)))
+        fechaFinalSA.replace("/","-")
+
+        cuentaAhorro = ET.Element('CuentaAhorro'
+                                  ,NumeroCuentaPrimaria = str(numCuenta)
+                                  ,NumeroCuentaAhorro = str(numeroCuentaAhorroList[i])
+                                  ,MontoAhorro = str(r.choice(montoAhorro))
+                                  ,DiaAhorro = str(r.choice(randSavingDay))
+                                  ,FechaFinal = fechaFinalSA
+                                  ,Descripcion = r.choice(descriptionSavingAccountList))
+        fechaOperacion.append(cuentaAhorro)
+
+        print("Personas creadas hasta ahora: ")     #NEW
+        printLista(PersonlistAfterRandomSelection)   
+                
         beneficiarioList = []
-        
-        cedula =  str(valorDocumentoIdentidadDelClienteList[i])
+
+        beneficiariosPorFecha = []
+        subListIDs = PersonlistAfterRandomSelection[:-1]
+        print("Sublista antes de beneficiarios = ")
+        printLista(subListIDs)
+        print("\n-------------------------\nFin SubLista que excluye el dueño de cuenta\n")
+
+        #********************************************               ADD BENEFICIARIES       *******************************************************
         for n in range(0,3):
-            beneficiarioCed = ValorDocumentoIdentidadBeneficiario = str(r.choice(valorDocumentoIdentidadDelClienteList))
-            while(beneficiarioCed == cedula):    #If owner's doc id is equal to new beneficiary doc Id, then change that beneficiary doc Id to avoid owner-beneficiary relation on same account
-                beneficiarioCed =  str(r.choice(valorDocumentoIdentidadDelClienteList))
+            beneficiarioCed = r.choice(subListIDs)
+            
+            while(beneficiarioCed in beneficiariosPorFecha):    #Not duplicated beneficiaries
+               beneficiarioCed =  r.choice(subListIDs)
             beneficiario = ET.Element('Beneficiario'
-                                    ,NumeroCuenta = str(r.choice(numeroCuentaList))
+                                    ,NumeroCuenta = numCuenta
                                     ,ValorDocumentoIdentidadBeneficiario = beneficiarioCed
-                                    ,ParentezcoId = r.choice(ParentezcoList)
+                                    ,ParentezcoId = str(r.choice(ParentezcoList))
                                     ,Porcentaje = str(r.randint(25,33))
                                     )
+            beneficiariosPorFecha.append(beneficiarioCed)
             beneficiarioList.append(beneficiario)
+         
             
         usuario = ET.Element('Usuario'
-                            ,User = str.lower(namesList[i])
-                            ,Pass = str(docId)
-                            ,Email = str.lower(email(names[i]))
-                            ,ValorDocumentoIdentidad = str(docId)
+                            ,User = str(namesList[personCount - 1])
+                            ,Pass = str(valorDocumentoIdentidadDelClienteList[personCount - 1])
+                            ,Email = str.lower(email(names[personCount - 1]))
+                            ,ValorDocumentoIdentidad = str(valorDocumentoIdentidadDelClienteList[personCount - 1])
                             ,EsAdministrador = str(r.randint(0,1))
                             )
         usuarioBool = r.randint(0,2)
         if(usuarioBool == 1):
             usuarioPuedeVer = ET.Element('UsuarioPuedeVer'
-                            ,User = str(namesList[i])
+                            ,User = str(valorDocumentoIdentidadDelClienteList[personCount - 1])
                             ,Cuenta = numCuenta
                             )
-            print(usuarioBool)
-            print("User: " + namesList[i])
-            print("Nombre usuario: " + str.lower(namesList[i]))
+
             fechaOperacion.append(usuarioPuedeVer)
 
 
@@ -132,7 +202,7 @@ def GenerateXML(fileName):
             movementsList.append(movimiento)
 
 #Building XML structure
-        fechaOperacion.append(persona)
+
         fechaOperacion.append(cuenta)
         fechaOperacion.extend(beneficiarioList)    
         fechaOperacion.extend(movementsList)
@@ -152,7 +222,7 @@ def GenerateXML(fileName):
             
             movimiento = ET.Element('Movimientos'
             ,Tipo = str(randTipo)
-            ,CodigoCuenta = str(numeroCuentaList[randCuenta])
+            ,CodigoCuenta = str(AccountListAfterRandomSelection[randCuenta])
             ,Monto = str(r.randint(10000,500000))
             ,Descripcion = movementDescList[randTipo])  
             movementsList2.append(movimiento)
@@ -172,11 +242,10 @@ def GenerateXML(fileName):
         
 GenerateXML('xmlTest.xml')
     
-#import webbrowser
-#new = 2 # open in a new tab, if possible
-#chrome_path = 'C:/Program Files/Google/Chrome/Application/chrome.exe %s'
-# open an HTML file on my own (Windows) computer
+import webbrowser
+new = 2 # open in a new tab, if possible
+chrome_path = 'C:/Program Files/Google/Chrome/Application/chrome.exe %s'
+#open an HTML file on my own (Windows) computer
 
-#url = "file://C:/Users/aguil/Dropbox/My PC (LAPTOP-1OL20O36)/Downloads/XML_Generator_DB-main/xmlTest.xml"
-#webbrowser.get(chrome_path).open(url,new=new)
-
+url = "file://C:/Users/aguil/Dropbox/My PC (LAPTOP-1OL20O36)/Downloads/XML_Generator_DB-main/xmlTest.xml"
+webbrowser.get(chrome_path).open(url,new=new)
